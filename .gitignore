@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+ENV/
+
+# AWS
+.aws-sam/
+samconfig.toml
+.aws/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.zip
+*.whl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# CloudFormation
+*.template.yaml.bak
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Secrets
+secrets/
+*.pem
+*.key
+credentials.json
+

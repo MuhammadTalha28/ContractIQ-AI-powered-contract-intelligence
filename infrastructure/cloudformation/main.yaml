@@ -1,0 +1,314 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Legal AI Contract Analyzer - Complete Infrastructure'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: contract-ai
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+
+Resources:
+  # S3 Buckets
+  UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-uploads-${Environment}-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+
+  TextractBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-textract-${Environment}-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+
+  # DynamoDB Tables
+  ContractsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-contracts-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: contract_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: contract_id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  ClausesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-clauses-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: clause_id
+          AttributeType: S
+        - AttributeName: contract_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: clause_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: contract-index
+          KeySchema:
+            - AttributeName: contract_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  # SQS Queue
+  ProcessingQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${ProjectName}-processing-${Environment}'
+      VisibilityTimeout: 300
+      MessageRetentionPeriod: 1209600  # 14 days
+
+  # SNS Topic
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-notifications-${Environment}'
+      DisplayName: Contract Analysis Notifications
+
+  # IAM Roles
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-lambda-role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ContractAIPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Join ['', [!GetAtt UploadBucket.Arn, '/*']]
+                  - !Join ['', [!GetAtt TextractBucket.Arn, '/*']]
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt ContractsTable.Arn
+                  - !GetAtt ClausesTable.Arn
+              - Effect: Allow
+                Action:
+                  - textract:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: 'arn:aws:bedrock:*::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0'
+              - Effect: Allow
+                Action:
+                  - sagemaker:InvokeEndpoint
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: !GetAtt ProcessingQueue.Arn
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref NotificationTopic
+
+  # Lambda Functions
+  UploadHandlerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-upload-handler-${Environment}'
+      Runtime: python3.9
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Placeholder'}
+      Environment:
+        Variables:
+          UPLOAD_BUCKET_NAME: !Ref UploadBucket
+          CONTRACTS_TABLE: !Ref ContractsTable
+
+  TextractProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-textract-processor-${Environment}'
+      Runtime: python3.9
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Placeholder'}
+      Environment:
+        Variables:
+          UPLOAD_BUCKET_NAME: !Ref UploadBucket
+          TEXTRACT_BUCKET_NAME: !Ref TextractBucket
+          SQS_QUEUE_URL: !Ref ProcessingQueue
+
+  BedrockAnalyzerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-bedrock-analyzer-${Environment}'
+      Runtime: python3.9
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 1024
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Placeholder'}
+      Environment:
+        Variables:
+          TEXTRACT_BUCKET_NAME: !Ref TextractBucket
+          CONTRACTS_TABLE: !Ref ContractsTable
+          CLAUSES_TABLE: !Ref ClausesTable
+          BEDROCK_MODEL_ID: anthropic.claude-3-sonnet-20240229-v1:0
+
+  SageMakerScorerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-sagemaker-scorer-${Environment}'
+      Runtime: python3.9
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 60
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Placeholder'}
+      Environment:
+        Variables:
+          SAGEMAKER_ENDPOINT_NAME: contract-risk-scorer
+          CONTRACTS_TABLE: !Ref ContractsTable
+
+  NotifyUserFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-notify-user-${Environment}'
+      Runtime: python3.9
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Placeholder'}
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref NotificationTopic
+          CONTRACTS_TABLE: !Ref ContractsTable
+
+  # EventBridge Rule
+  S3UploadRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${ProjectName}-s3-upload-${Environment}'
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - Object Created
+        detail:
+          bucket:
+            name:
+              - !Ref UploadBucket
+      Targets:
+        - Arn: !GetAtt TextractProcessorFunction.Arn
+          Id: TextractProcessorTarget
+
+  TextractProcessorPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt TextractProcessorFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+
+  # SQS Event Source Mapping for Bedrock Analyzer
+  BedrockAnalyzerEventSource:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt ProcessingQueue.Arn
+      FunctionName: !GetAtt BedrockAnalyzerFunction.Arn
+      BatchSize: 1
+      Enabled: true
+
+  # API Gateway
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub '${ProjectName}-api-${Environment}'
+      Description: Contract AI API
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # CloudWatch Log Groups
+  UploadHandlerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${UploadHandlerFunction}'
+      RetentionInDays: 14
+
+  TextractProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${TextractProcessorFunction}'
+      RetentionInDays: 14
+
+Outputs:
+  UploadBucketName:
+    Description: S3 bucket for contract uploads
+    Value: !Ref UploadBucket
+    Export:
+      Name: !Sub '${ProjectName}-upload-bucket-${Environment}'
+
+  ApiGatewayUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${ProjectName}-api-url-${Environment}'
+
+  ContractsTableName:
+    Description: DynamoDB contracts table name
+    Value: !Ref ContractsTable
+    Export:
+      Name: !Sub '${ProjectName}-contracts-table-${Environment}'
+
