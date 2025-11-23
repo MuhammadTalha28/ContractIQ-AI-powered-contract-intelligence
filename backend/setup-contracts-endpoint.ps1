@@ -1,7 +1,7 @@
 # Add /contracts endpoint to API Gateway
-$REST_API_ID = "apkt52eqka"
+$REST_API_ID = "YOUR_API_GATEWAY_ID"
 $REGION = "us-east-1"
-$rootResource = "eug178qxw1"
+$rootResource = "YOUR_ROOT_RESOURCE_ID"
 
 Write-Host "Creating /contracts resource..." -ForegroundColor Yellow
 $contractsResource = aws apigateway create-resource --rest-api-id $REST_API_ID --parent-id $rootResource --path-part "contracts" --query "id" --output text

@@ -1,5 +1,5 @@
 # Fix CORS OPTIONS method
-$REST_API_ID = "apkt52eqka"
+$REST_API_ID = "YOUR_API_GATEWAY_ID"
 $UPLOAD_RESOURCE_ID = "2ry9z7"
 
 Write-Host "=== Fixing CORS OPTIONS Method ===" -ForegroundColor Cyan

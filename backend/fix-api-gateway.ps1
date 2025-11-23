@@ -1,5 +1,5 @@
 # Fix API Gateway - Deploy and Configure CORS
-$REST_API_ID = "apkt52eqka"
+$REST_API_ID = "YOUR_API_GATEWAY_ID"
 $REGION = "us-east-1"
 $UPLOAD_RESOURCE_ID = "2ry9z7"
 

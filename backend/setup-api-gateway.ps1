@@ -1,5 +1,5 @@
 ﻿# Setup API Gateway for Frontend Connection
-$REST_API_ID = "apkt52eqka"
+$REST_API_ID = "YOUR_API_GATEWAY_ID"
 $REGION = "us-east-1"
 $UPLOAD_LAMBDA_ARN = "arn:aws:lambda:us-east-1:YOUR_AWS_ACCOUNT_ID:function:contract-ai-upload-handler-dev"
 
