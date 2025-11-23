@@ -32,34 +32,50 @@ export default function UploadPage() {
     setUploadProgress(0)
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
+      // Convert file to base64
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        try {
+          const base64Content = (e.target?.result as string).split(',')[1] // Remove data:application/pdf;base64, prefix
+          
+          setUploadProgress(50)
 
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/upload`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const percentCompleted = Math.round(
-                (progressEvent.loaded * 100) / progressEvent.total
-              )
-              setUploadProgress(percentCompleted)
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://YOUR_API_GATEWAY_URL/dev'
+          const response = await axios.post(
+            `${apiUrl}/upload`,
+            {
+              file_content: base64Content,
+              filename: file.name,
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
             }
-          },
-        }
-      )
+          )
 
-      if (response.data.contractId) {
-        router.push(`/dashboard?contract=${response.data.contractId}`)
+          setUploadProgress(100)
+
+          if (response.data.contractId) {
+            router.push(`/dashboard?contract=${response.data.contractId}`)
+          } else {
+            alert('Upload successful! Processing will begin shortly.')
+            router.push('/dashboard')
+          }
+        } catch (error: any) {
+          console.error('Upload failed:', error)
+          alert(`Upload failed: ${error.response?.data?.error || error.message}`)
+          setIsUploading(false)
+        }
       }
+      reader.onerror = () => {
+        alert('Failed to read file')
+        setIsUploading(false)
+      }
+      reader.readAsDataURL(file)
     } catch (error) {
       console.error('Upload failed:', error)
       alert('Upload failed. Please try again.')
-    } finally {
       setIsUploading(false)
     }
   }

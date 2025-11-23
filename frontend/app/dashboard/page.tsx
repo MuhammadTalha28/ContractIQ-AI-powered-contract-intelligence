@@ -24,7 +24,8 @@ export default function DashboardPage() {
 
   const fetchContracts = async () => {
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/contracts`)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://YOUR_API_GATEWAY_URL/dev'
+      const response = await axios.get(`${apiUrl}/contracts`)
       setContracts(response.data)
     } catch (error) {
       console.error('Failed to fetch contracts:', error)
@@ -116,7 +117,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {contract.status === 'completed' && (
+                {(contract.status === 'completed' || contract.status === 'analyzed') && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>

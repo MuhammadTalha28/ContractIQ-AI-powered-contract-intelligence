@@ -1,9 +1,9 @@
-# Test Pipeline and Monitor Logs
+﻿# Test Pipeline and Monitor Logs
 Write-Host "=== Testing Contract AI Pipeline ===" -ForegroundColor Cyan
 Write-Host ""
 
-$QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/024441264322/contract-ai-processing-dev"
-$TEXTRACT_BUCKET = "contract-ai-textract-dev-024441264322"
+$QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/YOUR_AWS_ACCOUNT_ID/contract-ai-processing-dev"
+$TEXTRACT_BUCKET = "contract-ai-textract-dev-YOUR_AWS_ACCOUNT_ID"
 $CONTRACT_ID = "contract5.pdf"
 $TEXT_KEY = "extracted-text/$CONTRACT_ID/text.txt"
 
@@ -25,7 +25,7 @@ Write-Host "Step 2: Sending test message to SQS..." -ForegroundColor Yellow
 $messageBody = @{
     contract_id = $CONTRACT_ID
     s3_key = "contracts/test/$CONTRACT_ID"
-    bucket = "contract-ai-uploads-dev-024441264322"
+    bucket = "contract-ai-uploads-dev-YOUR_AWS_ACCOUNT_ID"
 } | ConvertTo-Json -Compress
 
 [System.IO.File]::WriteAllText("$PWD\test-message.json", $messageBody, [System.Text.UTF8Encoding]::new($false))

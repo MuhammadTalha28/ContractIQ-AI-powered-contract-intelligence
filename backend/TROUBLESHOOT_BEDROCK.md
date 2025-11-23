@@ -1,10 +1,10 @@
-# Troubleshooting Bedrock Access Issue
+﻿# Troubleshooting Bedrock Access Issue
 
 ## Current Status
-- ✅ Use case submitted 26 hours ago
-- ✅ Lambda role has Marketplace permissions
-- ✅ Model is available in Bedrock
-- ❌ Still getting AccessDeniedException
+- âœ… Use case submitted 26 hours ago
+- âœ… Lambda role has Marketplace permissions
+- âœ… Model is available in Bedrock
+- âŒ Still getting AccessDeniedException
 
 ## The Problem
 The error message says: "Your AWS Marketplace subscription for this model cannot be completed at this time."
@@ -54,14 +54,14 @@ If you need to test the pipeline immediately, you could temporarily use:
 
 To switch models, update the Lambda environment variable:
 ```powershell
-aws lambda update-function-configuration --function-name contract-ai-bedrock-analyzer-dev --environment Variables="{BEDROCK_MODEL_ID=amazon.titan-text-express-v1,TEXTRACT_BUCKET_NAME=contract-ai-textract-dev-024441264322,CONTRACTS_TABLE=contract-ai-contracts-dev,CLAUSES_TABLE=contract-ai-clauses-dev}"
+aws lambda update-function-configuration --function-name contract-ai-bedrock-analyzer-dev --environment Variables="{BEDROCK_MODEL_ID=amazon.titan-text-express-v1,TEXTRACT_BUCKET_NAME=contract-ai-textract-dev-YOUR_AWS_ACCOUNT_ID,CONTRACTS_TABLE=contract-ai-contracts-dev,CLAUSES_TABLE=contract-ai-clauses-dev}"
 ```
 
 ## What's Working
-- ✅ All pipeline code is correct
-- ✅ All permissions are set up
-- ✅ Infrastructure is deployed
-- ✅ Lambda functions are working
+- âœ… All pipeline code is correct
+- âœ… All permissions are set up
+- âœ… Infrastructure is deployed
+- âœ… Lambda functions are working
 
 The **only** blocker is the Marketplace subscription activation.
 

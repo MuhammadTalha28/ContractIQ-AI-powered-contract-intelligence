@@ -1,4 +1,4 @@
-# Add SQS permissions to Lambda role
+﻿# Add SQS permissions to Lambda role
 $policyJson = @'
 {
   "Version": "2012-10-17",
@@ -10,7 +10,7 @@ $policyJson = @'
         "sqs:ReceiveMessage",
         "sqs:DeleteMessage"
       ],
-      "Resource": "arn:aws:sqs:us-east-1:024441264322:contract-ai-processing-dev"
+      "Resource": "arn:aws:sqs:us-east-1:YOUR_AWS_ACCOUNT_ID:contract-ai-processing-dev"
     }
   ]
 }

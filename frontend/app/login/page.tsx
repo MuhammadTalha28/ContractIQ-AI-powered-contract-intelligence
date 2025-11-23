@@ -16,9 +16,10 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://YOUR_API_GATEWAY_URL/dev'
       const endpoint = isSignUp ? '/auth/register' : '/auth/login'
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
+        `${apiUrl}${endpoint}`,
         { email, password }
       )
 

@@ -6,10 +6,12 @@ import json
 import boto3
 import os
 from datetime import datetime
+from decimal import Decimal
 from typing import Dict, Any
 
 sagemaker_runtime = boto3.client('sagemaker-runtime')
 dynamodb = boto3.resource('dynamodb')
+lambda_client = boto3.client('lambda')
 
 # Environment variables
 SAGEMAKER_ENDPOINT = os.environ.get('SAGEMAKER_ENDPOINT_NAME', 'contract-risk-scorer')
@@ -61,15 +63,23 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Call SageMaker endpoint
         risk_score = call_sagemaker_endpoint(features)
         
-        # Update contract with risk score
+        # Update contract with risk score (convert to Decimal for DynamoDB)
         contracts_table.update_item(
             Key={'contract_id': contract_id},
-            UpdateExpression='SET risk_score = :score, risk_calculated_at = :timestamp',
+            UpdateExpression='SET risk_score = :score, risk_calculated_at = :timestamp, #status = :status',
             ExpressionAttributeValues={
-                ':score': risk_score,
-                ':timestamp': datetime.utcnow().isoformat()
-            }
+                ':score': Decimal(str(round(risk_score, 2))),
+                ':timestamp': datetime.utcnow().isoformat(),
+                ':status': 'completed'
+            },
+            ExpressionAttributeNames={'#status': 'status'}
         )
+        
+        # Trigger notification
+        try:
+            trigger_notification(contract_id)
+        except Exception as e:
+            print(f"Failed to trigger notification: {e}")
         
         return {
             'statusCode': 200,
@@ -199,4 +209,19 @@ def get_risk_level(score: float) -> str:
         return 'medium'
     else:
         return 'low'
+
+
+def trigger_notification(contract_id: str) -> None:
+    """Trigger notification Lambda asynchronously."""
+    try:
+        lambda_client.invoke(
+            FunctionName='contract-ai-notify-user-dev',
+            InvocationType='Event',  # Async
+            Payload=json.dumps({
+                'contract_id': contract_id
+            })
+        )
+        print(f"Notification triggered for contract {contract_id}")
+    except Exception as e:
+        print(f"Failed to trigger notification: {e}")
 

@@ -1,0 +1,24 @@
+FROM python:3.9-slim
+
+WORKDIR /opt/ml
+
+# Install dependencies
+RUN pip install --no-cache-dir \
+    scikit-learn==1.0.2 \
+    numpy==1.21.6 \
+    pandas==1.3.5 \
+    boto3
+
+# Copy model file
+COPY model.pkl /opt/ml/model/model.pkl
+
+# Copy inference code
+COPY inference.py /opt/ml/code/inference.py
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=TRUE
+ENV PYTHONONDONTWRITEBYTECODE=TRUE
+
+# SageMaker expects model at /opt/ml/model and code at /opt/ml/code
+# The inference script will be automatically called by SageMaker
+

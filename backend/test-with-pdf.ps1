@@ -1,8 +1,8 @@
-# Test pipeline with actual PDF
+﻿# Test pipeline with actual PDF
 Write-Host "=== Testing with contract.pdf ===" -ForegroundColor Cyan
 Write-Host ""
 
-$BUCKET = "contract-ai-uploads-dev-024441264322"
+$BUCKET = "contract-ai-uploads-dev-YOUR_AWS_ACCOUNT_ID"
 $PDF_FILE = "contract.pdf"
 $S3_KEY = "contracts/test/contract.pdf"
 

@@ -11,6 +11,7 @@ from typing import Dict, Any, List
 bedrock_runtime = boto3.client('bedrock-runtime', region_name='us-east-1')
 s3_client = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
+lambda_client = boto3.client('lambda')
 
 # Environment variables
 TEXTRACT_BUCKET = os.environ.get('TEXTRACT_BUCKET_NAME', 'contract-textract-results')
@@ -79,6 +80,12 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Update contract status
             update_contract_status(contract_id, 'analyzed', analysis)
+            
+            # Trigger risk scoring (async)
+            try:
+                trigger_risk_scoring(contract_id, analysis)
+            except Exception as e:
+                print(f"Failed to trigger risk scoring: {e}")
             
             print(f"Analysis completed for contract {contract_id}")
         
@@ -224,4 +231,20 @@ def update_contract_status(contract_id: str, status: str, analysis: Dict[str, An
         ExpressionAttributeValues=expression_values,
         ExpressionAttributeNames=expression_names
     )
+
+
+def trigger_risk_scoring(contract_id: str, analysis: Dict[str, Any]) -> None:
+    """Trigger risk scoring Lambda asynchronously."""
+    try:
+        lambda_client.invoke(
+            FunctionName='contract-ai-sage-maker-scorer-dev',
+            InvocationType='Event',  # Async
+            Payload=json.dumps({
+                'contract_id': contract_id,
+                'analysis': analysis
+            })
+        )
+        print(f"Risk scoring triggered for contract {contract_id}")
+    except Exception as e:
+        print(f"Failed to trigger risk scoring: {e}")
 

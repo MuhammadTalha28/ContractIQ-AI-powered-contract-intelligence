@@ -58,7 +58,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         status = contract_item.get('status', 'unknown')
         
         # Only send notification if analysis is complete
-        if status != 'completed':
+        if status not in ['completed', 'analyzed']:
             return {
                 'statusCode': 200,
                 'body': json.dumps({'message': 'Analysis not complete, skipping notification'})

@@ -61,4 +61,17 @@ secrets/
 *.pem
 *.key
 credentials.json
+*.env
+*.env.local
+.env.*
+
+# AWS Account IDs and sensitive configs
+# Add any files with hardcoded account IDs here
+*account-id*
+*aws-account*
+
+# Deployment scripts with account IDs (optional - uncomment if you want to exclude)
+# backend/*.ps1
+# backend/*.sh
+# backend/*.py
 

@@ -1,0 +1,13 @@
+﻿{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sagemaker:InvokeEndpoint"
+      ],
+      "Resource": "arn:aws:sagemaker:us-east-1:YOUR_AWS_ACCOUNT_ID:endpoint/contract-risk-scorer-dev"
+    }
+  ]
+}
+

@@ -1,0 +1,12 @@
+{
+  "statusCode": "200",
+  "responseParameters": {
+    "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization'",
+    "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'",
+    "method.response.header.Access-Control-Allow-Origin": "'*'"
+  },
+  "responseTemplates": {
+    "application/json": ""
+  }
+}
+

@@ -1,0 +1,78 @@
+﻿{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::contract-ai-uploads-dev-YOUR_AWS_ACCOUNT_ID/*",
+                "arn:aws:s3:::contract-ai-textract-dev-YOUR_AWS_ACCOUNT_ID/*"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:Query",
+                "dynamodb:Scan"
+            ],
+            "Resource": [
+                "arn:aws:dynamodb:us-east-1:YOUR_AWS_ACCOUNT_ID:table/contract-ai-contracts-dev",
+                "arn:aws:dynamodb:us-east-1:YOUR_AWS_ACCOUNT_ID:table/contract-ai-clauses-dev"
+            ],
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "textract:*"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "bedrock:InvokeModel"
+            ],
+            "Resource": "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "sagemaker:InvokeEndpoint"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "sqs:SendMessage",
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage"
+            ],
+            "Resource": "arn:aws:sqs:us-east-1:YOUR_AWS_ACCOUNT_ID:contract-ai-processing-dev",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "sns:Publish"
+            ],
+            "Resource": "arn:aws:sns:us-east-1:YOUR_AWS_ACCOUNT_ID:contract-ai-notifications-dev",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "lambda:InvokeFunction"
+            ],
+            "Resource": [
+                "arn:aws:lambda:us-east-1:YOUR_AWS_ACCOUNT_ID:function:contract-ai-sage-maker-scorer-dev",
+                "arn:aws:lambda:us-east-1:YOUR_AWS_ACCOUNT_ID:function:contract-ai-notify-user-dev"
+            ],
+            "Effect": "Allow"
+        }
+    ]
+}
